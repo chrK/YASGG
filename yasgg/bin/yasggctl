@@ -46,7 +46,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + os.sep + '..' + 
 
 from yasgg import get_version
 from yasgg import logger
-from yasgg.models import Album, Theme
+from yasgg.album import Album
+from yasgg.theme import Theme
 from yasgg.server import ThreadingSimpleServer
 
 
@@ -59,7 +60,7 @@ class Commands(object):
 
     def build(self, args):
         use_encryption = bool(args['--password'])
-        if (use_encryption and len(args['--password']) < 8):
+        if use_encryption and len(args['--password']) < 8:
             logger.error('Password is too short. Use min 8 characters.')
             return
 
@@ -79,9 +80,8 @@ class Commands(object):
 
         # Write html file
         with open(album.html_file, 'wb') as html_file:
-            logger.info('Writing html file %s' % (album.html_file))
-            html = template.render(photos=album.photos_for_tpl, password=album.password, album_name=album.title,
-                                   timestamp=int(time.time()), zip_file=album.zip_file)
+            logger.info('Writing html file %s' % album.html_file)
+            html = template.render(album=album, timestamp=int(time.time()))
             html_file.write(html.encode('utf-8'))
 
     def serve(self, args):

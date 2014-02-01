@@ -14,13 +14,17 @@
 
 <body{% if password %} data-use-crypto="true"{% endif %}>
     <div class="header">
-        {% if zip_file %}
-            <a class="download-link" href="{{ zip_file }}">Download Album</a>
+        <ul class="breadcrumb">
+            <li><a href="/">Index</a></li>
+            <li><a href="/{{ album.slug }}/">{{ album.title }}</a></li>
+        </ul>
+        {% if album.zip_file %}
+            <a class="download-link" href="{{ album.zip_file }}">Download Album</a>
         {% endif %}
     </div>
 
     <div id="content">
-      {% for photo in photos %}
+      {% for photo in album.photos_for_tpl %}
       <div class="thumbnail-container">
         <a class="lightbox{% if password %} encrypted{% endif %}"
           {% if password %} href="#" data-src-encrypted="{{ photo.file }}"
@@ -50,7 +54,7 @@
     <script src="assets/js/screenfull.js?{{ timestamp }}" type="text/javascript"></script>
     <script src="assets/js/init.js?{{ timestamp }}" type="text/javascript"></script>
 
-    {% if password %}
+    {% if album.password %}
     <script src="assets/crypto/js/crypto.js?{{ timestamp }}" type="text/javascript"></script>
     <script src="assets/crypto/vendor/js/sha1.js?{{ timestamp }}" type="text/javascript"></script>
     <script src="assets/crypto/vendor/js/aes.js?{{ timestamp }}" type="text/javascript"></script>
