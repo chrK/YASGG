@@ -10,7 +10,7 @@ Usage: yasggctl build -i <photos-import-dir> [-t <theme>] [-p <password>] [-r <r
 
 Build command:
   Creates a new album in the current working directory.
-  Example: yasggctl build --recrusive 1 --photos-import-dir ./tests/sample --album-name "foo bar" --theme default
+  Example: yasggctl build --recrusive 1 --photos-import-dir ./tests/sample --theme default
 
   -i <photos-import-dir>, --photos-import-dir <photos-import-dir>   Directory of photos to import.
   -p <password>, --password <password>                              Use encryption of images. Use a _STRONG_ password!
