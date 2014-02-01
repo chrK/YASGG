@@ -27,10 +27,10 @@
       {% for photo in album.photos_for_tpl %}
       <div class="thumbnail-container">
         <a class="lightbox{% if password %} encrypted{% endif %}"
-          {% if password %} href="#" data-src-encrypted="{{ photo.file }}"
+          {% if album.password %} href="#" data-src-encrypted="{{ photo.file }}"
           {% else %}href="{{photo.file }}"{% endif %}>
           <img class="loading thumbnail-img screen-small {% if password %} encrypted{% endif %}"
-          {% if password %}data-src-encrypted="{{ photo.thumbnail_file }}"
+          {% if album.password %}data-src-encrypted="{{ photo.thumbnail_file }}"
           {% else %}src="{{photo.thumbnail_file }}"{% endif %}
           width="100%" />
         </a>
