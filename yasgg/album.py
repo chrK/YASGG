@@ -140,6 +140,7 @@ class Album(object):
                 del self.photos[photo_key]
                 self.photos[photo_file] = photo_file
 
+        i = 1
         for photo_key in sorted(self.photos.iterkeys()):
             logger.debug('Processing %s' % (photo_2_import))
             photo_2_import = self.photos[photo_key]
@@ -153,7 +154,12 @@ class Album(object):
             thumbnail_data['thumbnail_file'] = os.sep.join(thumbnail_data['thumbnail_file'].split(os.sep)[-2:])
             image_file_data['file'] = os.sep.join(image_file_data['file'].split(os.sep)[-2:])
 
+            # Set thumbnail if necessary
+            if i == 1 and not self.thumbnail:
+                self.thumbnail = os.path.join(self.slug, thumbnail_data['thumbnail_file'])
+
             # Merge two data dicts into one
             tpl_photo_data = dict(thumbnail_data.items() + image_file_data.items())
 
             self.photos_for_tpl.append(tpl_photo_data)
+            i += 1
