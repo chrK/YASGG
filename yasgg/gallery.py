@@ -2,18 +2,22 @@
 import os
 import ConfigParser
 
-from .settings import DEFAULT_GALLERY_CONFIG
+from yasgg import logger
+from yasgg.settings import DEFAULT_GALLERY_CONFIG
 
 
 class Gallery(object):
     title = None
     albums = []
 
+    base_dir = None
     config_file = 'gallery.cfg'
+
     html_file = None
 
     def __init__(self):
         self.load_config()
+        self.base_dir = os.getcwd()
         self.html_file = 'index.html'
 
     def load_config(self):

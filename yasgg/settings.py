@@ -2,7 +2,7 @@
 
 DEFAULT_GALLERY_CONFIG = """
 [gallery]
-name = Gallery Name
+title = Gallery Name
 """
 
 IMAGE_FILE_EXTENSIONS_2_IMPORT = ('jpeg', 'jpg', 'png', 'tiff')  # lower extensions!

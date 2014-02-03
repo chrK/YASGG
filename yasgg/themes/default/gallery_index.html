@@ -15,21 +15,18 @@
 <body>
     <div class="header">
         <ul class="breadcrumb">
-            <li><a href="/">Index</a></li>
+            <li><a class="current" href="/">{{ gallery.title }}</a></li>
         </ul>
     </div>
 
     <div id="content">
-        <ul>
-            {% for album in gallery.albums %}
-                <li>{{ album.title }}
-                    <a href="{{ album.slug }}">
-                        <img src="{{ album.thumbnail }}">
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+        {% for album in gallery.albums %}
+            <div class="thumbnail-container">
+                <a href="{{ album.slug }}">
+                    <img width="100%" class="thumbnail-img" src="{{ album.thumbnail }}">
+                </a>
+            </div>
+        {% endfor %}
     </div>
-
 </body>
 </html>

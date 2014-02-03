@@ -72,7 +72,8 @@ class Commands(object):
             self.serve(args)
 
     def init(selfself, args):
-        gallery = Gallery()
+        # Create gallery (write config file) and return.
+        Gallery()
 
     def add(self, args):
         import_dir = args['--photos-import-dir']
@@ -94,6 +95,7 @@ class Commands(object):
 
         # Create gallery
         gallery = Gallery()
+        # TODO: We should check if a gallery was already initialized.
 
         # Create albums
         albums = []
@@ -106,17 +108,10 @@ class Commands(object):
             theme = Theme(args['--theme'])
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
-            # Copy theme data
-            copy_tree(theme.basedir, os.path.join(album.base_dir, 'assets'))
-
-            # Copy asset data needed for all themes
-            assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-            copy_tree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
-
             # Write html file
             with open(album.html_file, 'wb') as html_file:
                 logger.info('Writing html file %s' % album.html_file)
-                html = template.render(album=album, timestamp=int(time.time()))
+                html = template.render(album=album, gallery=gallery, timestamp=int(time.time()))
                 html_file.write(html.encode('utf-8'))
 
         # Write albums to gallery
@@ -125,6 +120,14 @@ class Commands(object):
 
         theme = Theme(args['--theme'])
         template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
+
+        # Copy theme data
+        copy_tree(theme.basedir, os.path.join(gallery.base_dir, 'assets'))
+
+        # Copy asset data needed for all themes
+        assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
+        print copy_tree(assets_dir_for_all, '%s%s%s' % (gallery.base_dir, os.sep, 'assets'))
+
         copy(theme.gallery_template, 'index.html')
 
         with open(gallery.html_file, 'wb') as html_file:
