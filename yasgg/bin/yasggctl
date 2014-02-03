@@ -40,7 +40,8 @@ Global options:
 import sys
 import os
 import codecs
-from shutil import copy, copytree
+from shutil import copy
+from distutils.dir_util import copy_tree
 
 import time
 
@@ -91,10 +92,8 @@ class Commands(object):
         else:
             import_dirs.append(import_dir)
 
+        # Create gallery
         gallery = Gallery()
-
-        print gallery.name
-        print gallery.albums
 
         # Create albums
         albums = []
@@ -107,14 +106,12 @@ class Commands(object):
             theme = Theme(args['--theme'])
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
-            print album.html_file
-
             # Copy theme data
-            copytree(theme.basedir, os.path.join(album.base_dir, 'assets'))
+            copy_tree(theme.basedir, os.path.join(album.base_dir, 'assets'))
 
             # Copy asset data needed for all themes
             assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-            copytree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
+            copy_tree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
 
             # Write html file
             with open(album.html_file, 'wb') as html_file:
@@ -122,8 +119,8 @@ class Commands(object):
                 html = template.render(album=album, timestamp=int(time.time()))
                 html_file.write(html.encode('utf-8'))
 
+        # Write albums to gallery
         for album in albums:
-            print album
             gallery.albums.append(album)
 
         theme = Theme(args['--theme'])
@@ -170,11 +167,11 @@ class Commands(object):
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
             # Copy theme data
-            copytree(theme.basedir, os.path.join(album.base_dir, 'assets'))
+            copy_tree(theme.basedir, os.path.join(album.base_dir, 'assets'))
 
             # Copy asset data needed for all themes
             assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-            copytree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
+            copy_tree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
 
             # Write html file
             with open(album.html_file, 'wb') as html_file:
