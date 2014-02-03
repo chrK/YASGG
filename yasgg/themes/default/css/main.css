@@ -6,15 +6,34 @@
     box-shadow: 0 2px 2px 1px #333;
     z-index: 10;
 }
-.download-link {
+.header a {
     display: inline-block;
-    float: right;
     font-size: 14px;
     font-weight: 500;
     line-height: 40px;
-    padding-right: 20px;
-    text-align: right;
     text-decoration: none;
+}
+.breadcrumb {
+    list-style-type: none;
+    margin-left: 10px;
+    padding-left: 0;
+}
+.breadcrumb li {
+    float: left;
+}
+.breadcrumb li:after {
+    content: " / ";
+}
+.breadcrumb li:last-child:after {
+    content: "";
+}
+.breadcrumb li a {
+    padding: 0 5px;
+}
+
+.download-link {
+    float: right;
+    margin-right: 20px;
 }
 
 a {

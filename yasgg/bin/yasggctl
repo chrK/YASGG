@@ -10,7 +10,7 @@ Usage: yasggctl build -i <photos-import-dir> [-t <theme>] [-p <password>] [-r <r
 
 Build command:
   Creates a new album in the current working directory.
-  Example: yasggctl build --recrusive 1 --photos-import-dir ./tests/sample --album-name "foo bar" --theme default
+  Example: yasggctl build --recrusive 1 --photos-import-dir ./tests/sample --theme default
 
   -i <photos-import-dir>, --photos-import-dir <photos-import-dir>   Directory of photos to import.
   -p <password>, --password <password>                              Use encryption of images. Use a _STRONG_ password!
@@ -46,7 +46,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + os.sep + '..' + 
 
 from yasgg import get_version
 from yasgg import logger
-from yasgg.models import Album, Theme
+from yasgg.album import Album
+from yasgg.theme import Theme
 from yasgg.server import ThreadingSimpleServer
 
 
@@ -59,30 +60,47 @@ class Commands(object):
 
     def build(self, args):
         use_encryption = bool(args['--password'])
-        if (use_encryption and len(args['--password']) < 8):
+        if use_encryption and len(args['--password']) < 8:
             logger.error('Password is too short. Use min 8 characters.')
             return
 
-        album = Album(import_dir=args['--photos-import-dir'])
-        album.import_photos()
-        album.create_zipped_version()
+        import_dir = args['--photos-import-dir']
+        if not os.path.exists(import_dir):
+            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit' % import_dir)
+            return
 
-        theme = Theme(args['--theme'])
-        template = Template(codecs.open(theme.template, 'r', 'utf8').read())
+        # Create list of directories to import / albums to create
+        import_dirs = []
 
-        # Copy theme data
-        copytree(theme.basedir, os.path.join(album.basedir, 'assets'))
+        # Check if import directory has sub folders
+        import_tree = [x for x in os.walk(import_dir)]
+        import_sub_dirs = import_tree[0][1]
+        if import_sub_dirs:
+            for sub_dir in import_sub_dirs:
+                import_dirs.append(os.path.join(import_dir, sub_dir))
+        else:
+            import_dirs.append(import_dir)
 
-        # Copy asset data needed for all themes
-        assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-        copytree(assets_dir_for_all, '%s%s' % (album.basedir, 'assets/crypto'))
+        for import_dir in import_dirs:
+            album = Album(import_dir=import_dir)
+            album.import_photos()
+            album.create_zipped_version()
 
-        # Write html file
-        with open(album.html_file, 'wb') as html_file:
-            logger.info('Writing html file %s' % (album.html_file))
-            html = template.render(photos=album.photos_for_tpl, password=album.password, album_name=album.title,
-                                   timestamp=int(time.time()), zip_file=album.zip_file)
-            html_file.write(html.encode('utf-8'))
+            theme = Theme(args['--theme'])
+            template = Template(codecs.open(theme.template, 'r', 'utf8').read())
+
+            # Copy theme data
+            copytree(theme.basedir, os.path.join(album.base_dir, 'assets'))
+
+            # Copy asset data needed for all themes
+            assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
+            copytree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
+
+            # Write html file
+            with open(album.html_file, 'wb') as html_file:
+                logger.info('Writing html file %s' % album.html_file)
+                html = template.render(album=album, timestamp=int(time.time()))
+                html_file.write(html.encode('utf-8'))
 
     def serve(self, args):
         server = ThreadingSimpleServer((args['--bind'], int(args['--port'])), SimpleHTTPServer.SimpleHTTPRequestHandler)
