@@ -21,7 +21,7 @@ class Album(object):
     # Visible meta data
     title = None
     slug = None
-    basedir = None
+    base_dir = None
     description = None
     thumbnail = None
     date_range = None  # TODO: Get date range from info file, else from exif data.
@@ -43,18 +43,13 @@ class Album(object):
 
     @property
     def assets_dir(self):
-        return self.basedir + self.assets_dir_name + os.sep
+        return self.base_dir + self.assets_dir_name + os.sep
 
     def __init__(self, import_dir):
-        if os.path.exists(import_dir):
-            self.import_dir = import_dir
-        else:
-            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit' % import_dir)
-            sys.exit(0)
-
+        self.import_dir = import_dir
         self.get_self_informed()
 
-        ensure_dir(self.basedir)
+        ensure_dir(self.base_dir)
         ensure_dir(self.photos_dir)
 
     def get_self_informed(self):
@@ -97,11 +92,11 @@ class Album(object):
         self.slug = slugify(self.title)
 
         # Set directories
-        self.basedir = os.path.abspath('.%s%s' % (os.sep, self.slug)) + os.sep
-        self.photos_dir = '%sphotos%s' % (self.basedir, os.sep)
+        self.base_dir = os.path.abspath('.%s%s' % (os.sep, self.slug)) + os.sep
+        self.photos_dir = '%sphotos%s' % (self.base_dir, os.sep)
 
         # Set template file
-        self.html_file = '%sindex.html' % self.basedir
+        self.html_file = '%sindex.html' % self.base_dir
 
         # Build md5 hash of password to get len 32 key
         if self.password:
@@ -109,7 +104,7 @@ class Album(object):
 
     def create_zipped_version(self):
         """
-        Creates a zip of all self.photos if self is not encrypted and returns the relative path of the zip
+        Creates a zip of all album photos if the album is not encrypted and returns the relative path of the zip.
         """
 
         if not self.password:

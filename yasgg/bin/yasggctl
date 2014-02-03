@@ -64,25 +64,43 @@ class Commands(object):
             logger.error('Password is too short. Use min 8 characters.')
             return
 
-        album = Album(import_dir=args['--photos-import-dir'])
-        album.import_photos()
-        album.create_zipped_version()
+        import_dir = args['--photos-import-dir']
+        if not os.path.exists(import_dir):
+            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit' % import_dir)
+            return
 
-        theme = Theme(args['--theme'])
-        template = Template(codecs.open(theme.template, 'r', 'utf8').read())
+        # Create list of directories to import / albums to create
+        import_dirs = []
 
-        # Copy theme data
-        copytree(theme.basedir, os.path.join(album.basedir, 'assets'))
+        # Check if import directory has sub folders
+        import_tree = [x for x in os.walk(import_dir)]
+        import_sub_dirs = import_tree[0][1]
+        if import_sub_dirs:
+            for sub_dir in import_sub_dirs:
+                import_dirs.append(os.path.join(import_dir, sub_dir))
+        else:
+            import_dirs.append(import_dir)
 
-        # Copy asset data needed for all themes
-        assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-        copytree(assets_dir_for_all, '%s%s' % (album.basedir, 'assets/crypto'))
+        for import_dir in import_dirs:
+            album = Album(import_dir=import_dir)
+            album.import_photos()
+            album.create_zipped_version()
 
-        # Write html file
-        with open(album.html_file, 'wb') as html_file:
-            logger.info('Writing html file %s' % album.html_file)
-            html = template.render(album=album, timestamp=int(time.time()))
-            html_file.write(html.encode('utf-8'))
+            theme = Theme(args['--theme'])
+            template = Template(codecs.open(theme.template, 'r', 'utf8').read())
+
+            # Copy theme data
+            copytree(theme.basedir, os.path.join(album.base_dir, 'assets'))
+
+            # Copy asset data needed for all themes
+            assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
+            copytree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
+
+            # Write html file
+            with open(album.html_file, 'wb') as html_file:
+                logger.info('Writing html file %s' % album.html_file)
+                html = template.render(album=album, timestamp=int(time.time()))
+                html_file.write(html.encode('utf-8'))
 
     def serve(self, args):
         server = ThreadingSimpleServer((args['--bind'], int(args['--port'])), SimpleHTTPServer.SimpleHTTPRequestHandler)
