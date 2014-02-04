@@ -9,7 +9,7 @@ from slugify import slugify
 from zipfile import ZipFile
 
 from yasgg.photo import Photo
-from yasgg.settings import IMAGE_FILE_EXTENSIONS_2_IMPORT
+from yasgg.settings import IMAGE_FILE_EXTENSIONS_TO_IMPORT
 from yasgg.utils import walkdir, ensure_dir
 
 from . import logger
@@ -119,20 +119,20 @@ class Album(object):
             self.zip_file = os.sep.join(zip_file_name.split(os.sep)[-2:])
 
     def import_photos(self):
-        logger.info('Searching for photos in %s' % self.import_dir)
+        logger.info('Looking for photos in %s' % self.import_dir)
         self.photos = {}
         exif_date_for_all_photos = True
-        for photo_2_import in walkdir(dir_2_walk=self.import_dir):
-            extension = os.path.splitext(photo_2_import)[1][1:]
-            if extension.lower() not in IMAGE_FILE_EXTENSIONS_2_IMPORT:
+        for photo_to_import in walkdir(dir_2_walk=self.import_dir):
+            extension = os.path.splitext(photo_to_import)[1][1:]
+            if extension.lower() not in IMAGE_FILE_EXTENSIONS_TO_IMPORT:
                 continue
-            photo = Photo(image_file_original=photo_2_import, album=self)
+            photo = Photo(image_file_original=photo_to_import, album=self)
             exif_date = photo.exif_date
             if exif_date:
-                self.photos[exif_date + photo_2_import] = photo_2_import
+                self.photos[exif_date + photo_to_import] = photo_to_import
             else:
                 exif_date_for_all_photos = False
-                self.photos[photo_2_import] = photo_2_import
+                self.photos[photo_to_import] = photo_to_import
 
         # If there is not an exif date on all photos, use path instead
         if not exif_date_for_all_photos:
@@ -141,10 +141,11 @@ class Album(object):
                 self.photos[photo_file] = photo_file
 
         i = 1
+        self.photos_for_tpl = []
         for photo_key in sorted(self.photos.iterkeys()):
-            logger.debug('Processing %s' % (photo_2_import))
-            photo_2_import = self.photos[photo_key]
-            photo = Photo(image_file_original=photo_2_import, album=self)
+            photo_to_import = self.photos[photo_key]
+            logger.debug('Processing %s' % photo_to_import)
+            photo = Photo(image_file_original=photo_to_import, album=self)
 
             # Create thumbnail and main image
             thumbnail_data = photo.create_thumbnail()

@@ -78,13 +78,13 @@ class Commands(object):
     def add(self, args):
         import_dir = args['--photos-import-dir']
         if not os.path.exists(import_dir):
-            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit' % import_dir)
+            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit.' % import_dir)
             return
 
         # Create list of directories to import / albums to create
         import_dirs = []
 
-        # Check if import directory has sub folders
+        # Check if import directory has sub folders; if yes, make several albums
         import_tree = [x for x in os.walk(import_dir)]
         import_sub_dirs = import_tree[0][1]
         if import_sub_dirs:
@@ -102,6 +102,7 @@ class Commands(object):
         for import_dir in import_dirs:
             album = Album(import_dir=import_dir)
             album.import_photos()
+
             album.create_zipped_version()
             albums.append(album)
 
