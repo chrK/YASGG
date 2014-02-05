@@ -114,7 +114,8 @@ class Commands(object):
             album.create_zipped_version()
             albums.append(album)
 
-            theme = Theme(args['--theme'])
+            # TODO: The album html-writing should be taken elsewhere. Here we should only create the album pictures and data.
+            theme = Theme()
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
             # Write html file
@@ -123,14 +124,13 @@ class Commands(object):
                 html = template.render(album=album, gallery=gallery, timestamp=int(time.time()))
                 html_file.write(html.encode('utf-8'))
 
-        # Write albums to gallery
+        # Write albums to gallery ...
         for album in albums:
             gallery.albums[album.slug] = album
-
-        # Write json file
-        # TODO: This should be called from within the gallery.
+        # ... and update json file
         gallery.write_album_data_to_disk()
 
+        # TODO: The gallery html-writing should be taken elsewhere. Here we should only give the gallery the needed data.
         theme = Theme(args['--theme'])
         template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
 
@@ -157,6 +157,7 @@ class Commands(object):
         album_to_delete = args['-s']
         gallery = Gallery()
         gallery.delete_album(album_to_delete)
+        # TODO: ... and rebuild the index.
 
     def build(self, args):
         use_encryption = bool(args['--password'])
