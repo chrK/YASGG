@@ -7,6 +7,7 @@ MarkupSafe==0.18
 Pillow==2.2.1
 pycrypto==2.6.1
 python-slugify==0.0.7
+simplejson==3.3.2
 tendo==0.2.4
 wsgiref==0.1.2
 YASGG==0.1

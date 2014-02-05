@@ -3,10 +3,22 @@
 """
 YASGG - Yet another static gallery generator. CLI.
 
-Usage: yasggctl build -i <photos-import-dir> [-t <theme>] [-p <password>] [-r <recrusive>]
+Usage: yasggctl init
+       yasggctl add -i <photos-import-dir>
+       yasggctl list
+       yasggctl delete -s <album-slug>
+       yasggctl build -i <photos-import-dir> [-t <theme>] [-p <password>] [-r <recrusive>]
        yasggctl serve [-o <port>] [-b <bind>]
        yasggctl [-h] [-v]
 
+Init command:
+  Initializes a new gallery in the current working directory.
+
+Add command:
+  Adds one or more directories with photos to gallery.
+
+List command:
+  Lists all known albums of this gallery.
 
 Build command:
   Creates a new album in the current working directory.
@@ -33,7 +45,8 @@ Global options:
 import sys
 import os
 import codecs
-from shutil import copytree
+from shutil import copy
+from distutils.dir_util import copy_tree
 
 import time
 
@@ -46,6 +59,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + os.sep + '..' + 
 
 from yasgg import get_version
 from yasgg import logger
+from yasgg.gallery import initialize_gallery, Gallery
 from yasgg.album import Album
 from yasgg.theme import Theme
 from yasgg.server import ThreadingSimpleServer
@@ -53,10 +67,96 @@ from yasgg.server import ThreadingSimpleServer
 
 class Commands(object):
     def __init__(self, args):
-        if args['build']:
+        if args['init']:
+            self.init_gallery()
+        elif args['add']:
+            self.add_albums(args)
+        elif args['list']:
+            self.list_albums()
+        elif args['delete']:
+            self.delete_album(args)
+        elif args['build']:
             self.build(args)
         elif args['serve']:
             self.serve(args)
+
+    def init_gallery(self):
+        """ Create gallery (write config file and album json) and return. """
+        initialize_gallery()
+
+    def add_albums(self, args):
+        import_dir = args['--photos-import-dir']
+        if not os.path.exists(import_dir):
+            logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit.' % import_dir)
+            return
+
+        # Create list of directories to import / albums to create
+        import_dirs = []
+
+        # Check if import directory has sub folders; if yes, make several albums
+        import_tree = [x for x in os.walk(import_dir)]
+        import_sub_dirs = import_tree[0][1]
+        if import_sub_dirs:
+            for sub_dir in import_sub_dirs:
+                import_dirs.append(os.path.join(import_dir, sub_dir))
+        else:
+            import_dirs.append(import_dir)
+
+        # Get gallery
+        gallery = Gallery()
+
+        # Create albums
+        albums = []
+        for import_dir in import_dirs:
+            album = Album(import_dir=import_dir)
+            # TODO: If album (slug) already exists, we should prompt if the album should be added with a modified slug or replace the existing album.
+            album.import_photos()
+            album.create_zipped_version()
+            albums.append(album)
+
+            theme = Theme(args['--theme'])
+            template = Template(codecs.open(theme.template, 'r', 'utf8').read())
+
+            # Write html file
+            with open(album.html_file, 'wb') as html_file:
+                logger.info('Writing html file %s' % album.html_file)
+                html = template.render(album=album, gallery=gallery, timestamp=int(time.time()))
+                html_file.write(html.encode('utf-8'))
+
+        # Write albums to gallery
+        for album in albums:
+            gallery.albums[album.slug] = album
+
+        # Write json file
+        # TODO: This should be called from within the gallery.
+        gallery.write_album_data_to_disk()
+
+        theme = Theme(args['--theme'])
+        template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
+
+        # Copy theme data
+        copy_tree(theme.basedir, os.path.join(gallery.base_dir, 'assets'))
+
+        # Copy asset data needed for all themes
+        assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
+        copy_tree(assets_dir_for_all, '%s%s%s' % (gallery.base_dir, os.sep, 'assets'))
+
+        copy(theme.gallery_template, 'index.html')
+
+        with open(gallery.html_file, 'wb') as html_file:
+                logger.info('Writing html file %s' % gallery.html_file)
+                html = template.render(gallery=gallery)
+                html_file.write(html.encode('utf-8'))
+
+    def list_albums(self):
+        gallery = Gallery()
+        gallery.list_albums()
+
+    def delete_album(self, args):
+        # TODO: Bugged.
+        album_to_delete = args['-s']
+        gallery = Gallery()
+        gallery.delete_album(album_to_delete)
 
     def build(self, args):
         use_encryption = bool(args['--password'])
@@ -81,20 +181,23 @@ class Commands(object):
         else:
             import_dirs.append(import_dir)
 
+        # Create albums
+        albums = []
         for import_dir in import_dirs:
             album = Album(import_dir=import_dir)
             album.import_photos()
             album.create_zipped_version()
+            albums.append(album)
 
             theme = Theme(args['--theme'])
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
             # Copy theme data
-            copytree(theme.basedir, os.path.join(album.base_dir, 'assets'))
+            copy_tree(theme.basedir, os.path.join(album.base_dir, 'assets'))
 
             # Copy asset data needed for all themes
             assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-            copytree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
+            copy_tree(assets_dir_for_all, '%s%s' % (album.base_dir, 'assets/crypto'))
 
             # Write html file
             with open(album.html_file, 'wb') as html_file:

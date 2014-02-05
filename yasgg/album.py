@@ -9,7 +9,7 @@ from slugify import slugify
 from zipfile import ZipFile
 
 from yasgg.photo import Photo
-from yasgg.settings import IMAGE_FILE_EXTENSIONS_2_IMPORT
+from yasgg.settings import IMAGE_FILE_EXTENSIONS_TO_IMPORT
 from yasgg.utils import walkdir, ensure_dir
 
 from . import logger
@@ -102,10 +102,55 @@ class Album(object):
         if self.password:
             self.password_hashed = hashlib.md5(self.password).hexdigest()
 
+    def import_photos(self):
+        logger.info('Looking for photos in %s' % self.import_dir)
+        self.photos = {}
+        exif_date_for_all_photos = True
+        for photo_to_import in walkdir(dir_2_walk=self.import_dir):
+            extension = os.path.splitext(photo_to_import)[1][1:]
+            if extension.lower() not in IMAGE_FILE_EXTENSIONS_TO_IMPORT:
+                continue
+            photo = Photo(image_file_original=photo_to_import, album=self)
+            exif_date = photo.exif_date
+            if exif_date:
+                self.photos[exif_date + photo_to_import] = photo_to_import
+            else:
+                exif_date_for_all_photos = False
+                self.photos[photo_to_import] = photo_to_import
+
+        # If there is not an exif date on all photos, use path instead
+        if not exif_date_for_all_photos:
+            for photo_key, photo_file in self.photos.items():
+                del self.photos[photo_key]
+                self.photos[photo_file] = photo_file
+
+        i = 1
+        self.photos_for_tpl = []
+        for photo_key in sorted(self.photos.iterkeys()):
+            photo_to_import = self.photos[photo_key]
+            logger.debug('Processing %s' % photo_to_import)
+            photo = Photo(image_file_original=photo_to_import, album=self)
+
+            # Create thumbnail and main image
+            thumbnail_data = photo.create_thumbnail()
+            image_file_data = photo.provide()
+
+            # Make photo path relative
+            thumbnail_data['thumbnail_file'] = os.sep.join(thumbnail_data['thumbnail_file'].split(os.sep)[-2:])
+            image_file_data['file'] = os.sep.join(image_file_data['file'].split(os.sep)[-2:])
+
+            # Set thumbnail if necessary
+            if i == 1 and not self.thumbnail:
+                self.thumbnail = os.path.join(self.slug, thumbnail_data['thumbnail_file'])
+
+            # Merge two data dicts into one
+            tpl_photo_data = dict(thumbnail_data.items() + image_file_data.items())
+
+            self.photos_for_tpl.append(tpl_photo_data)
+            i += 1
+
     def create_zipped_version(self):
-        """
-        Creates a zip of all album photos if the album is not encrypted and returns the relative path of the zip.
-        """
+        """ Creates a zip of all album photos if the album is not encrypted. """
 
         if not self.password:
             zip_file_name = '%s%s.zip' % (self.photos_dir, self.slug)
@@ -117,43 +162,3 @@ class Album(object):
 
             # Make relative path
             self.zip_file = os.sep.join(zip_file_name.split(os.sep)[-2:])
-
-    def import_photos(self):
-        logger.info('Searching for photos in %s' % self.import_dir)
-        self.photos = {}
-        exif_date_for_all_photos = True
-        for photo_2_import in walkdir(dir_2_walk=self.import_dir):
-            extension = os.path.splitext(photo_2_import)[1][1:]
-            if extension.lower() not in IMAGE_FILE_EXTENSIONS_2_IMPORT:
-                continue
-            photo = Photo(image_file_original=photo_2_import, album=self)
-            exif_date = photo.exif_date
-            if exif_date:
-                self.photos[exif_date + photo_2_import] = photo_2_import
-            else:
-                exif_date_for_all_photos = False
-                self.photos[photo_2_import] = photo_2_import
-
-        # If there is not an exif date on all photos, use path instead
-        if not exif_date_for_all_photos:
-            for photo_key, photo_file in self.photos.items():
-                del self.photos[photo_key]
-                self.photos[photo_file] = photo_file
-
-        for photo_key in sorted(self.photos.iterkeys()):
-            logger.debug('Processing %s' % (photo_2_import))
-            photo_2_import = self.photos[photo_key]
-            photo = Photo(image_file_original=photo_2_import, album=self)
-
-            # Create thumbnail and main image
-            thumbnail_data = photo.create_thumbnail()
-            image_file_data = photo.provide()
-
-            # Make photo path relative
-            thumbnail_data['thumbnail_file'] = os.sep.join(thumbnail_data['thumbnail_file'].split(os.sep)[-2:])
-            image_file_data['file'] = os.sep.join(image_file_data['file'].split(os.sep)[-2:])
-
-            # Merge two data dicts into one
-            tpl_photo_data = dict(thumbnail_data.items() + image_file_data.items())
-
-            self.photos_for_tpl.append(tpl_photo_data)

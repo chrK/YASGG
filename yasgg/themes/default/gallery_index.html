@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <title>{{ gallery.title }}</title>
+  <meta name="viewport" content="user-scalable=no,initial-scale = 1.0,maximum-scale = 1.0"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/topcoat-desktop-dark.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/main.css"/>
+  <link rel="stylesheet" href="assets/js/magnific-popup/magnific-popup.css"/>
+  <!--[if lt IE 9]>
+  <script src="assets/js/html5shiv.js" type="text/javascript"></script><![endif]-->
+</head>
+
+<body>
+    <div class="header">
+        <ul class="breadcrumb">
+            <li><a class="current" href="/">{{ gallery.title }}</a></li>
+        </ul>
+    </div>
+
+    <div id="content">
+        {% for key, album in gallery.albums.items() %}
+            <div class="thumbnail-container">
+                <a href="{{ album.slug }}">
+                    <img width="100%" class="thumbnail-img" src="{{ album.thumbnail }}">
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -7,6 +7,7 @@ class Theme(object):
     name = None
     basedir = None
     template = None
+    gallery_template = None
 
     def __init__(self, name):
         self.name = name
@@ -21,12 +22,13 @@ class Theme(object):
             logger.info('Using theme %s (%s).' % (self.name, self.basedir))
 
         # set and check template.html in tpl dir
-        self.template = '%sindex.html' % (self.basedir)
+        self.template = '%sindex.html' % self.basedir
+        self.gallery_template = '%sgallery_index.html' % self.basedir
         if not os.path.exists(self.template):
-            logger.error('Template file %s does not exist.' % (self.template))
+            logger.error('Template file %s does not exist.' % self.template)
             exit(1)
         else:
-            logger.debug('Using template file %s.' % (self.template))
+            logger.debug('Using template file %s.' % self.template)
 
 
 
