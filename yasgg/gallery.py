@@ -1,13 +1,17 @@
 #-*- coding: utf-8 -*-
-import os
-import sys
+import codecs
 import ConfigParser
-
+import os
 import simplejson as json
+import sys
+import time
 
-from shutil import rmtree
+from distutils.dir_util import copy_tree
+from jinja2 import Template
+from shutil import rmtree, copy
 
 from yasgg import logger
+from yasgg.theme import Theme
 from yasgg.utils import ensure_file
 from yasgg.settings import DEFAULT_GALLERY_CONFIG, DEFAULT_ALBUMS_LIST, GALLERY_CONFIG, ALBUM_DATA
 
@@ -78,15 +82,12 @@ class Gallery(object):
         else:
             logger.info('No albums exist in %s', os.getcwd())
 
-    def add_album(self):
+    def add_album(self, album):
         """ Adds an album to the gallery. """
 
-        # If album exists ...
-            # Prompt if the album should be added with another slug or if the existing album should be replaced.
-        # Else:
-            # Create album
-            # Add album data to json file
-        pass
+        # TODO: Should check for existing album be here? (And not in yasgg?)
+        slug = album.slug
+        self.albums[slug] = album
 
     def build_index(self):
         # TODO: Build index from json file.
@@ -128,3 +129,28 @@ class Gallery(object):
 
             album_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')
             albums_data_file.write(album_data)
+
+    def write_gallery(self):
+        theme = Theme(name=self.theme)
+
+        # Copy theme data
+        copy_tree(theme.base_dir, os.path.join(self.base_dir, 'assets'))
+        assets_dir_for_all = '%s%s' % (os.path.join(theme.base_dir, '..', '_assets_for_all_themes'), os.sep)
+        copy_tree(assets_dir_for_all, '%s%s%s' % (self.base_dir, os.sep, 'assets'))
+
+        # Write gallery HTML
+        gallery_template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
+        copy(theme.gallery_template, 'index.html')
+        with open(self.html_file, 'wb') as html_file:
+                logger.info('Writing html file %s' % self.html_file)
+                html = gallery_template.render(gallery=self)
+                html_file.write(html.encode('utf-8'))
+
+        # Write albums HTML
+        for album in self.albums.itervalues():
+            album_template = Template(codecs.open(theme.album_template, 'r', 'utf8').read())
+            copy(theme.album_template, os.path.join(album['slug'], 'index.html'))
+            with open(os.path.join(album['slug'], 'index.html'), 'wb') as html_file:
+                logger.info('Writing html file %s' % os.path.join(album['slug'], 'index.html'))
+                html = album_template.render(album=album, gallery=self, timestamp=int(time.time()))
+                html_file.write(html.encode('utf-8'))

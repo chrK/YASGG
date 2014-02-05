@@ -38,7 +38,6 @@ class Album(object):
     password_hashed = None
 
     # Template
-    html_file = None
     photos_for_tpl = []
 
     @property
