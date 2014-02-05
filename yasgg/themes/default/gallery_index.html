@@ -20,7 +20,7 @@
     </div>
 
     <div id="content">
-        {% for album in gallery.albums %}
+        {% for key, album in gallery.albums.items() %}
             <div class="thumbnail-container">
                 <a href="{{ album.slug }}">
                     <img width="100%" class="thumbnail-img" src="{{ album.thumbnail }}">

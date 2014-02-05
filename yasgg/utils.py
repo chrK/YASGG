@@ -32,7 +32,14 @@ def walkdir(dir_2_walk, recrusive=True):
 
 
 def ensure_dir(path):
-    """Create the dir if it does not exist"""
+    """Create the dir if it does not exist."""
 
     if not os.path.isdir(path):
         os.makedirs(path)
+
+
+def ensure_file(path, file_content=''):
+    """Create file if it does not exist."""
+    if not os.path.exists(path):
+        with open(path, 'wb') as file_to_ensure:
+            file_to_ensure.write(file_content)

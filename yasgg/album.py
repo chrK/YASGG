@@ -102,22 +102,6 @@ class Album(object):
         if self.password:
             self.password_hashed = hashlib.md5(self.password).hexdigest()
 
-    def create_zipped_version(self):
-        """
-        Creates a zip of all album photos if the album is not encrypted and returns the relative path of the zip.
-        """
-
-        if not self.password:
-            zip_file_name = '%s%s.zip' % (self.photos_dir, self.slug)
-
-            with ZipFile(zip_file_name, 'w') as album_zip:
-                for file_name in self.photos.itervalues():
-                    arc_name = file_name.split('/').pop()
-                    album_zip.write(file_name, arcname=arc_name)
-
-            # Make relative path
-            self.zip_file = os.sep.join(zip_file_name.split(os.sep)[-2:])
-
     def import_photos(self):
         logger.info('Looking for photos in %s' % self.import_dir)
         self.photos = {}
@@ -164,3 +148,17 @@ class Album(object):
 
             self.photos_for_tpl.append(tpl_photo_data)
             i += 1
+
+    def create_zipped_version(self):
+        """ Creates a zip of all album photos if the album is not encrypted. """
+
+        if not self.password:
+            zip_file_name = '%s%s.zip' % (self.photos_dir, self.slug)
+
+            with ZipFile(zip_file_name, 'w') as album_zip:
+                for file_name in self.photos.itervalues():
+                    arc_name = file_name.split('/').pop()
+                    album_zip.write(file_name, arcname=arc_name)
+
+            # Make relative path
+            self.zip_file = os.sep.join(zip_file_name.split(os.sep)[-2:])
