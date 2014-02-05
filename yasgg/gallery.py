@@ -13,7 +13,7 @@ from yasgg.settings import DEFAULT_GALLERY_CONFIG, DEFAULT_ALBUMS_LIST, GALLERY_
 
 
 def initialize_gallery():
-    if not os.path.exists(GALLERY_CONFIG):
+    if not os.path.exists(GALLERY_CONFIG) or not os.path.exists(ALBUM_DATA):
         ensure_file(GALLERY_CONFIG, DEFAULT_GALLERY_CONFIG)
         ensure_file(ALBUM_DATA, DEFAULT_ALBUMS_LIST)
         logger.info('Initialized gallery. You can start adding albums now.')
