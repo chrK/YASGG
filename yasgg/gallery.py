@@ -95,19 +95,27 @@ class Gallery(object):
     def delete_album(self, album_slug):
         """ Deletes an album. """
 
-        if os.path.exists(album_slug):
-            rmtree(album_slug)
-            del self.albums[album_slug]
-            self.write_album_data_to_disk()
-            # TODO: rebuild gallery index
-            logger.info('Deleted album named %s' % album_slug)
+        if album_slug in self.albums:
+            choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: " % (os.path.join(os.getcwd(), album_slug), os.sep))
+            choice = choice or 'N'
+            if choice == 'Y':
+                try:
+                    rmtree(album_slug)
+                except OSError:
+                    pass
+                del self.albums[album_slug]
+                self.write_album_data_to_disk()
+                # TODO: rebuild gallery index
+                logger.info('Deleted album named %s' % album_slug)
         else:
             logger.error('An album named %s doesn\'t exist.' % album_slug)
 
     def write_album_data_to_disk(self):
         """ Writes self.albums as json to disk. """
 
-        with open(self.albums_data, 'wb') as albums_data_file:
+        with open(self.albums_data, 'w') as albums_data_file:
+            print self.albums
+
             for album_key, album in self.albums.iteritems():
                 self.albums[album.slug] = {
                     "slug": album.slug,  # = relative path

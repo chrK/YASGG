@@ -160,11 +160,10 @@ class Commands(object):
         gallery.list_albums()
 
     def delete_album(self, args):
-        # TODO: Bugged.
-        album_to_delete = args['-s']
+        # TODO: Bugged
+        album_to_delete = args['<album-slug>']
         gallery = Gallery()
         gallery.delete_album(album_to_delete)
-        # TODO: ... and rebuild the index.
 
     def build(self, args):
         use_encryption = bool(args['--password'])
