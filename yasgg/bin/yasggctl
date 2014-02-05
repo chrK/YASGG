@@ -109,13 +109,19 @@ class Commands(object):
         albums = []
         for import_dir in import_dirs:
             album = Album(import_dir=import_dir)
-            # TODO: If album (slug) already exists, we should prompt if the album should be added with a modified slug or replace the existing album.
+            if album.slug in gallery.albums:
+                choice = raw_input("A album named '%s' already exists in this gallery.\n"
+                                   "Do you want to replace the existing one? Y/N [N]: " % album.slug)
+                choice = choice or 'N'
+                if choice == 'N':
+                    continue
+
             album.import_photos()
             album.create_zipped_version()
             albums.append(album)
 
             # TODO: The album html-writing should be taken elsewhere. Here we should only create the album pictures and data.
-            theme = Theme()
+            theme = Theme(name=args['--theme'])
             template = Template(codecs.open(theme.template, 'r', 'utf8').read())
 
             # Write html file
@@ -125,28 +131,29 @@ class Commands(object):
                 html_file.write(html.encode('utf-8'))
 
         # Write albums to gallery ...
-        for album in albums:
-            gallery.albums[album.slug] = album
-        # ... and update json file
-        gallery.write_album_data_to_disk()
+        if albums:
+            for album in albums:
+                gallery.albums[album.slug] = album
+            # ... and update json file
+            gallery.write_album_data_to_disk()
 
-        # TODO: The gallery html-writing should be taken elsewhere. Here we should only give the gallery the needed data.
-        theme = Theme(args['--theme'])
-        template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
+            # TODO: The gallery html-writing should be taken elsewhere. Here we should only give the gallery the needed data.
+            theme = Theme(args['--theme'])
+            template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
 
-        # Copy theme data
-        copy_tree(theme.basedir, os.path.join(gallery.base_dir, 'assets'))
+            # Copy theme data
+            copy_tree(theme.basedir, os.path.join(gallery.base_dir, 'assets'))
 
-        # Copy asset data needed for all themes
-        assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
-        copy_tree(assets_dir_for_all, '%s%s%s' % (gallery.base_dir, os.sep, 'assets'))
+            # Copy asset data needed for all themes
+            assets_dir_for_all = '%s%s' % (os.path.join(theme.basedir, '..', '_assets_for_all_themes'), os.sep)
+            copy_tree(assets_dir_for_all, '%s%s%s' % (gallery.base_dir, os.sep, 'assets'))
 
-        copy(theme.gallery_template, 'index.html')
+            copy(theme.gallery_template, 'index.html')
 
-        with open(gallery.html_file, 'wb') as html_file:
-                logger.info('Writing html file %s' % gallery.html_file)
-                html = template.render(gallery=gallery)
-                html_file.write(html.encode('utf-8'))
+            with open(gallery.html_file, 'wb') as html_file:
+                    logger.info('Writing html file %s' % gallery.html_file)
+                    html = template.render(gallery=gallery)
+                    html_file.write(html.encode('utf-8'))
 
     def list_albums(self):
         gallery = Gallery()
