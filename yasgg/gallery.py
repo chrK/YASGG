@@ -89,10 +89,6 @@ class Gallery(object):
         slug = album.slug
         self.albums[slug] = album
 
-    def build_index(self):
-        # TODO: Build index from json file.
-        pass
-
     def delete_album(self, album_slug):
         """ Deletes an album. """
 
@@ -142,9 +138,9 @@ class Gallery(object):
         gallery_template = Template(codecs.open(theme.gallery_template, 'r', 'utf8').read())
         copy(theme.gallery_template, 'index.html')
         with open(self.html_file, 'wb') as html_file:
-                logger.info('Writing html file %s' % self.html_file)
-                html = gallery_template.render(gallery=self)
-                html_file.write(html.encode('utf-8'))
+            logger.info('Writing html file %s' % self.html_file)
+            html = gallery_template.render(gallery=self)
+            html_file.write(html.encode('utf-8'))
 
         # Write albums HTML
         for album in self.albums.itervalues():
