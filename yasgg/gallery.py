@@ -92,6 +92,9 @@ class Gallery(object):
     def delete_album(self, album_slug):
         """ Deletes an album. """
 
+        logger.error('This feature is not implemented yet.' % album_slug)
+        return
+
         if album_slug in self.albums:
             choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: " % (os.path.join(os.getcwd(), album_slug), os.sep))
             choice = choice or 'N'
@@ -101,8 +104,8 @@ class Gallery(object):
                 except OSError:
                     pass
                 del self.albums[album_slug]
+                # TODO: This is bugged ...
                 self.write_album_data_to_disk()
-                # TODO: rebuild gallery index
                 logger.info('Deleted album named %s' % album_slug)
         else:
             logger.error('An album named %s doesn\'t exist.' % album_slug)
