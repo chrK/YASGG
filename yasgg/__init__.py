@@ -7,7 +7,7 @@ LOG_LEVEL = logging.DEBUG
 
 # init logging
 logger = logging
-logger.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=LOG_LEVEL)
+logger.basicConfig(format='%(levelname)s %(message)s', level=LOG_LEVEL)
 
 
 # Taken from Django project

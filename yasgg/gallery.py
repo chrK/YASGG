@@ -11,7 +11,6 @@ from jinja2 import Template
 from shutil import rmtree, copy
 
 from yasgg import logger
-from yasgg.album import Album
 from yasgg.theme import Theme
 from yasgg.utils import ensure_file
 from yasgg.settings import DEFAULT_GALLERY_CONFIG, DEFAULT_ALBUMS_LIST, GALLERY_CONFIG, ALBUM_DATA
@@ -55,11 +54,6 @@ class Gallery(object):
             sys.exit(0)
 
     def load_config(self):
-        """
-        Loads config file. If config file doesn't exist yet,
-        the config file is created with the default values.
-        """
-
         config = ConfigParser.ConfigParser()
         config.read(self.config_file)
         self.title = config.get('gallery', 'title')
@@ -75,17 +69,9 @@ class Gallery(object):
             for album in self.albums.iterkeys():
                 print album
         else:
-            logger.info('No albums exist in %s', os.getcwd())
+            logger.info('No albums exist in \'%s\'', os.getcwd())
 
-    def add_album(self, import_dir):
-        album_to_add = Album(import_dir=import_dir)
-        if album_to_add.slug in self.albums:
-            choice = raw_input("A album named '%s' already exists in this gallery.\n"
-                               "Do you want to replace the existing one? Y/N [N]: " % album_to_add.slug)
-            choice = choice or 'N'
-            if choice == 'N':
-                return
-
+    def add_album(self, album_to_add):
         album_to_add.get_photos_to_import()
         album_to_add.import_photos()
         #album.create_zipped_version()
@@ -106,7 +92,7 @@ class Gallery(object):
                 pass
             del self.albums[album_slug]
             self.update_album_json_data()
-            logger.info('Deleted album named %s' % album_slug)
+            logger.info('Deleted album named \'%s\'.' % album_slug)
         else:
             logger.error('An album named %s doesn\'t exist.' % album_slug)
 
@@ -128,6 +114,12 @@ class Gallery(object):
 
     def get_sorted_album_list(self):
         return sorted(self.albums.items(), key=lambda x: x[1]['sort_key'], reverse=True)
+
+    def album_exists(self, slug):
+        if slug in self.albums.iterkeys():
+            return True
+        else:
+            return False
 
     def write_gallery(self):
         theme = Theme(name=self.theme)

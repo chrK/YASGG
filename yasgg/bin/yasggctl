@@ -44,11 +44,13 @@ from docopt import docopt
 import SimpleHTTPServer
 import webbrowser
 
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + os.sep + '..' + os.sep + '..' + os.sep)
 
 from yasgg import get_version
 from yasgg import logger
 from yasgg.gallery import Gallery
+from yasgg.album import Album
 from yasgg.server import ThreadingSimpleServer
 
 
@@ -90,7 +92,18 @@ class Commands(object):
 
         # Add albums
         for import_dir in import_dirs:
-            gallery.add_album(import_dir)
+            album_to_add = Album(import_dir=import_dir)
+
+            if gallery.album_exists(album_to_add.slug):
+                choice = raw_input("A album named '%s' already exists in this gallery.\n"
+                                   "Do you want to replace the existing one? Y/N [N]: " % album_to_add.slug)
+                choice = choice or 'N'
+                if choice == 'Y':
+                    gallery.delete_album(album_to_add.slug, prompt_for_delete=False)
+                    album_to_add = Album(import_dir=import_dir)
+                else:
+                    continue
+            gallery.add_album(album_to_add)
 
     def list_albums(self):
         gallery = Gallery()

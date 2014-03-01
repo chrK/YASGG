@@ -96,7 +96,7 @@ class Album(object):
             self.password_hashed = hashlib.md5(self.password).hexdigest()
 
     def get_photos_to_import(self):
-        logger.info('Looking for photos in %s.' % self.import_dir)
+        logger.info('Looking for photos in %s' % self.import_dir)
         for image_file in walkdir(dir_2_walk=self.import_dir):
             image_file_extension = os.path.splitext(image_file)[1][1:]
             if image_file_extension.lower() in IMAGE_FILE_EXTENSIONS_TO_IMPORT:
