@@ -116,6 +116,7 @@ class Commands(object):
 
     def delete_album(self, args):
         # TODO: Bugged
+        return
         album_to_delete = args['<album-slug>']
         gallery = Gallery()
         gallery.delete_album(album_to_delete)

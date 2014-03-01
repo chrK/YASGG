@@ -114,16 +114,16 @@ class Gallery(object):
         """ Writes self.albums as json to disk. """
 
         with open(self.albums_data, 'w') as albums_data_file:
-            print self.albums
-
             for album_key, album in self.albums.iteritems():
                 self.albums[album.slug] = {
                     "slug": album.slug,  # = relative path
                     "base_dir": album.base_dir,
                     "title": album.title,
                     "thumbnail": album.thumbnail,
-                    "photos": [x for x in album.photos_for_tpl],
-                    "description": album.description
+                    "photos": [x for x in album.photos],
+                    "description": album.description,
+                    "sort_key": album.sort_key,
+                    "date_range": album.date_range,
                 }
 
             album_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')

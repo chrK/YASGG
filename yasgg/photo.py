@@ -31,7 +31,8 @@ class Photo(object):
 
     @property
     def exif_date(self):
-        """Get date from exif data"""
+        """ Get date from exif data. """
+
         exif_data = {}
         try:
             image = Image.open(self.image_file_original)
@@ -51,7 +52,8 @@ class Photo(object):
 
     @property
     def basename(self):
-        """Returns the image file name"""
+        """ Returns the image file name. """
+
         return os.path.basename(self.image_file_original)
 
     @classmethod
@@ -66,12 +68,12 @@ class Photo(object):
 
             file_encrypted = '%s.enc' % (file_2_encrypt)
             with open(file_encrypted, 'wb') as outfile:
-                # header
-                out = '1'.rjust(header_item_bytes)  # yasgg enc file version info
+                # Header
+                out = '1'.rjust(header_item_bytes)  # YASGG enc file version info
                 out += file_sha1.rjust(header_item_bytes)  # 40 byte sha1 checksum of original file
                 out += iv.encode('hex').rjust(header_item_bytes)  # 16 byte initialization vector
 
-                # write file content hex encoded because ajax calls can not fetch binary data
+                # Write file content hex encoded because ajax calls can not fetch binary data
                 out += encryptor.encrypt(file_content).encode('hex')
                 outfile.write(out)
 
@@ -116,7 +118,7 @@ class Photo(object):
         }
 
     def provide(self):
-        logger.info('Providing image as %s' % (self.image_file))
+        logger.info('Providing image as %s' % self.image_file)
 
         img = Image.open(self.image_file_original)
         img.thumbnail([1920, 1080], Image.ANTIALIAS)
@@ -127,7 +129,7 @@ class Photo(object):
         img.save(self.image_file, 'jpeg', quality=quality, optimize=True, progressive=True)
         size = img.size
 
-        # encrypt if requested
+        # Encrypt if requested
         if self.album.password:
             photo_file = Photo.__encrypt(file_2_encrypt=self.image_file, album=self.album)
             os.unlink(self.image_file)
@@ -137,5 +139,7 @@ class Photo(object):
         return {
             'file': photo_file,
             'width': size[0],
-            'height': size[1]
+            'height': size[1],
+            'date': self.exif_date
+
         }
