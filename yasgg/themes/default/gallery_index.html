@@ -20,8 +20,9 @@
     </div>
 
     <div id="content">
-        {% for key, album in gallery.albums.items() %}
+        {% for slug, album in albums %}
             <div class="thumbnail-container">
+                <p>{{ album.date_range }} – {{ album.title }}</p>
                 <a href="{{ album.slug }}">
                     <img width="100%" class="thumbnail-img" src="{{ album.thumbnail }}">
                 </a>

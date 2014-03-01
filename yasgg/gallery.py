@@ -6,6 +6,7 @@ import simplejson as json
 import sys
 import time
 
+from collections import OrderedDict
 from distutils.dir_util import copy_tree
 from jinja2 import Template
 from shutil import rmtree, copy
@@ -129,6 +130,10 @@ class Gallery(object):
             album_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')
             albums_data_file.write(album_data)
 
+    def get_sorted_album_list(self):
+        return sorted(self.albums.items(), key= lambda x: x[1]['sort_key'], reverse=True)
+
+
     def write_gallery(self):
         theme = Theme(name=self.theme)
 
@@ -142,7 +147,7 @@ class Gallery(object):
         copy(theme.gallery_template, 'index.html')
         with open(self.html_file, 'wb') as html_file:
             logger.info('Writing html file %s' % self.html_file)
-            html = gallery_template.render(gallery=self)
+            html = gallery_template.render(gallery=self, albums=self.get_sorted_album_list())
             html_file.write(html.encode('utf-8'))
 
         # Write albums HTML
