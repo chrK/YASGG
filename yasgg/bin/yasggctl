@@ -48,8 +48,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + os.sep + '..' + 
 
 from yasgg import get_version
 from yasgg import logger
-from yasgg.gallery import initialize_gallery, Gallery
-from yasgg.album import Album
+from yasgg.gallery import Gallery
 from yasgg.server import ThreadingSimpleServer
 
 
@@ -69,8 +68,7 @@ class Commands(object):
             self.serve(args)
 
     def init_gallery(self):
-        """ Create gallery (write config file and album json) and return. """
-        initialize_gallery()
+        Gallery.initialize_gallery()
 
     def add_albums(self, args):
         import_dir = args['--photos-import-dir']
@@ -78,13 +76,10 @@ class Commands(object):
             logger.error('The directory to import (%s) does not exist. No album creation is possible and I\'ve to exit.' % import_dir)
             return
 
-        # Get gallery
         gallery = Gallery()
 
-        # Create list of directories to import / albums to create
-        import_dirs = []
-
         # Check if import directory has sub folders; if yes, make several albums
+        import_dirs = []
         import_tree = [x for x in os.walk(import_dir)]
         import_sub_dirs = import_tree[0][1]
         if import_sub_dirs:
@@ -93,23 +88,9 @@ class Commands(object):
         else:
             import_dirs.append(import_dir)
 
-        # Create albums
+        # Add albums
         for import_dir in import_dirs:
-            album = Album(import_dir=import_dir)
-            if album.slug in gallery.albums:
-                choice = raw_input("A album named '%s' already exists in this gallery.\n"
-                                   "Do you want to replace the existing one? Y/N [N]: " % album.slug)
-                choice = choice or 'N'
-                if choice == 'N':
-                    continue
-
-            album.get_photos_to_import()
-            album.import_photos()
-            #album.create_zipped_version()
-            gallery.add_album(album)
-
-        # Update persistent album data.
-        gallery.write_album_data_to_disk()
+            gallery.add_album(import_dir)
 
     def list_albums(self):
         gallery = Gallery()

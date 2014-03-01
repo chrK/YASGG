@@ -172,3 +172,20 @@ class Album(object):
 
     def last_photo_date(self):
         return self.exif_date_to_datetime(self.photos[-1]['date'])
+
+    def serialized_version(self):
+        serialized_album = {}
+        serialized_album['title'] = self.title
+        serialized_album['slug'] = self.slug
+        serialized_album['base_dir'] = self.base_dir
+        serialized_album['description'] = self.description
+        serialized_album['thumbnail'] = self.thumbnail
+        serialized_album['sort_key'] = self.sort_key
+        serialized_album['date_range'] = self.date_range
+        serialized_album['photos'] = self.photos
+        serialized_album['html_file'] = self.html_file
+        serialized_album['zip_file'] = self.zip_file
+        serialized_album['password'] = self.password
+
+        return serialized_album
+

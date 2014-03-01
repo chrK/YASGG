@@ -6,24 +6,15 @@ import simplejson as json
 import sys
 import time
 
-from collections import OrderedDict
 from distutils.dir_util import copy_tree
 from jinja2 import Template
 from shutil import rmtree, copy
 
 from yasgg import logger
+from yasgg.album import Album
 from yasgg.theme import Theme
 from yasgg.utils import ensure_file
 from yasgg.settings import DEFAULT_GALLERY_CONFIG, DEFAULT_ALBUMS_LIST, GALLERY_CONFIG, ALBUM_DATA
-
-
-def initialize_gallery():
-    if not os.path.exists(GALLERY_CONFIG) or not os.path.exists(ALBUM_DATA):
-        ensure_file(GALLERY_CONFIG, DEFAULT_GALLERY_CONFIG)
-        ensure_file(ALBUM_DATA, DEFAULT_ALBUMS_LIST)
-        logger.info('Initialized gallery. You can start adding albums now.')
-    else:
-        logger.info('This folder already seems to be a gallery.')
 
 
 class Gallery(object):
@@ -44,7 +35,16 @@ class Gallery(object):
         self.base_dir = os.getcwd()
         self.check_config()
         self.load_config()
-        self.load_albums()
+        self.load_albums_from_json()
+
+    @staticmethod
+    def initialize_gallery():
+        if not os.path.exists(GALLERY_CONFIG) or not os.path.exists(ALBUM_DATA):
+            ensure_file(GALLERY_CONFIG, DEFAULT_GALLERY_CONFIG)
+            ensure_file(ALBUM_DATA, DEFAULT_ALBUMS_LIST)
+            logger.info('Initialized gallery. You can start adding albums now.')
+        else:
+            logger.info('This folder already seems to be a gallery.')
 
     def check_config(self):
         config_file = os.path.exists(self.config_file)
@@ -65,18 +65,11 @@ class Gallery(object):
         self.title = config.get('gallery', 'title')
         self.theme = config.get('gallery', 'theme')
 
-    def load_albums(self):
-        """
-        Loads json with albums data. If the file doesn't exist yet,
-        an empty list is created as json file.
-        """
-
+    def load_albums_from_json(self):
         with open(self.albums_data, 'rb') as albums_data_file:
             self.albums = json.loads(albums_data_file.read())
 
     def list_albums(self):
-        """ Lists all known albums. """
-
         if self.albums:
             logger.info('Following albums exist:')
             for album in self.albums.iterkeys():
@@ -84,49 +77,54 @@ class Gallery(object):
         else:
             logger.info('No albums exist in %s', os.getcwd())
 
-    def add_album(self, album):
-        """ Adds an album to the gallery. """
-
-        # TODO: Should check for existing album be here? (And not in yasgg?)
-        slug = album.slug
-        self.albums[slug] = album
-
-    def delete_album(self, album_slug):
-        """ Deletes an album. """
-
-        if album_slug in self.albums:
-            choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: "
-                               % (os.path.join(os.getcwd(), album_slug), os.sep))
+    def add_album(self, import_dir):
+        album_to_add = Album(import_dir=import_dir)
+        if album_to_add.slug in self.albums:
+            choice = raw_input("A album named '%s' already exists in this gallery.\n"
+                               "Do you want to replace the existing one? Y/N [N]: " % album_to_add.slug)
             choice = choice or 'N'
-            if choice == 'Y':
-                try:
-                    rmtree(album_slug)
-                except OSError:
-                    pass
-                del self.albums[album_slug]
-                self.write_album_data_to_disk()
-                logger.info('Deleted album named %s' % album_slug)
+            if choice == 'N':
+                return
+
+        album_to_add.get_photos_to_import()
+        album_to_add.import_photos()
+        #album.create_zipped_version()
+        self.albums[album_to_add.slug] = album_to_add.serialized_version()
+        self.update_album_json_data()
+
+    def delete_album(self, album_slug, prompt_for_delete=True):
+        if album_slug in self.albums:
+            if prompt_for_delete:
+                choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: "
+                                   % (os.path.join(os.getcwd(), album_slug), os.sep))
+                choice = choice or 'N'
+                if choice == 'N':
+                    return
+            try:
+                rmtree(album_slug)
+            except OSError:
+                pass
+            del self.albums[album_slug]
+            self.update_album_json_data()
+            logger.info('Deleted album named %s' % album_slug)
         else:
             logger.error('An album named %s doesn\'t exist.' % album_slug)
 
-    def write_album_data_to_disk(self):
-        """ Writes self.albums as json to disk. """
-
+    def update_album_json_data(self):
         with open(self.albums_data, 'w') as albums_data_file:
             for album_key, album in self.albums.iteritems():
-                self.albums[album.slug] = {
-                    "base_dir": album.base_dir,
-                    "date_range": album.date_range,
-                    "description": album.description,
-                    "photos": [x for x in album.photos],
-                    "slug": album.slug,  # = relative path
-                    "sort_key": album.sort_key,
-                    "title": album.title,
-                    "thumbnail": album.thumbnail,
+                self.albums[album_key] = {
+                    "base_dir": album['base_dir'],
+                    "date_range": album['date_range'],
+                    "description": album['description'],
+                    "photos": [x for x in album['photos']],
+                    "slug": album['slug'],
+                    "sort_key": album['sort_key'],
+                    "title": album['title'],
+                    "thumbnail": album['thumbnail'],
                 }
-
-            album_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')
-            albums_data_file.write(album_data)
+            albums_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')
+            albums_data_file.write(albums_data)
 
     def get_sorted_album_list(self):
         return sorted(self.albums.items(), key=lambda x: x[1]['sort_key'], reverse=True)
