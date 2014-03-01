@@ -66,7 +66,7 @@ class Photo(object):
             file_content = infile.read()
             file_sha1 = hashlib.sha1(file_content.encode('hex')).hexdigest()
 
-            file_encrypted = '%s.enc' % (file_2_encrypt)
+            file_encrypted = '%s.enc' % file_2_encrypt
             with open(file_encrypted, 'wb') as outfile:
                 # Header
                 out = '1'.rjust(header_item_bytes)  # YASGG enc file version info
@@ -82,7 +82,7 @@ class Photo(object):
     def create_thumbnail(self):
         """ Takes an image, resizes the longest size to thumbnail_size and crops the middle. """
 
-        logger.info('Creating thumbnail %s' % (self.thumbnail_file))
+        logger.info('Creating thumbnail %s' % self.thumbnail_file)
 
         thumbnail_size = 600
 
@@ -121,12 +121,6 @@ class Photo(object):
         logger.info('Providing image as %s' % self.image_file)
 
         img = Image.open(self.image_file_original)
-        img.thumbnail([1920, 1080], Image.ANTIALIAS)
-        if img.format == 'JPEG':
-            quality = 'keep'
-        else:
-            quality = 100
-        img.save(self.image_file, 'jpeg', quality=quality, optimize=True, progressive=True)
         size = img.size
 
         # Encrypt if requested
@@ -141,5 +135,4 @@ class Photo(object):
             'width': size[0],
             'height': size[1],
             'date': self.exif_date
-
         }

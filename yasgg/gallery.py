@@ -50,7 +50,8 @@ class Gallery(object):
         config_file = os.path.exists(self.config_file)
         album_data = os.path.exists(self.albums_data)
         if not config_file or not album_data:
-            logger.info('No gallery was initialized in this directory (%s) yet. Please initialize a gallery first.' % self.base_dir)
+            logger.info('No gallery was initialized in this directory (%s) yet. Please initialize a gallery first.'
+                        % self.base_dir)
             sys.exit(0)
 
     def load_config(self):
@@ -93,11 +94,9 @@ class Gallery(object):
     def delete_album(self, album_slug):
         """ Deletes an album. """
 
-        logger.error('This feature is not implemented yet.' % album_slug)
-        return
-
         if album_slug in self.albums:
-            choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: " % (os.path.join(os.getcwd(), album_slug), os.sep))
+            choice = raw_input("Are you sure you want to delete the album '%s%s'? Y/N [N]: "
+                               % (os.path.join(os.getcwd(), album_slug), os.sep))
             choice = choice or 'N'
             if choice == 'Y':
                 try:
@@ -105,7 +104,6 @@ class Gallery(object):
                 except OSError:
                     pass
                 del self.albums[album_slug]
-                # TODO: This is bugged ...
                 self.write_album_data_to_disk()
                 logger.info('Deleted album named %s' % album_slug)
         else:
@@ -131,8 +129,7 @@ class Gallery(object):
             albums_data_file.write(album_data)
 
     def get_sorted_album_list(self):
-        return sorted(self.albums.items(), key= lambda x: x[1]['sort_key'], reverse=True)
-
+        return sorted(self.albums.items(), key=lambda x: x[1]['sort_key'], reverse=True)
 
     def write_gallery(self):
         theme = Theme(name=self.theme)
@@ -152,6 +149,8 @@ class Gallery(object):
 
         # Write albums HTML
         for album in self.albums.itervalues():
+            print album['title']
+            print album['photos']
             album_template = Template(codecs.open(theme.album_template, 'r', 'utf8').read())
             copy(theme.album_template, os.path.join(album['slug'], 'index.html'))
             with open(os.path.join(album['slug'], 'index.html'), 'wb') as html_file:

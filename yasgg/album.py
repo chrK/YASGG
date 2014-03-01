@@ -4,7 +4,6 @@ import operator
 import os
 import hashlib
 import markdown
-import time
 
 from dateutil import parser as dateutil_parser
 from slugify import slugify
@@ -27,25 +26,20 @@ class Album(object):
     description = None
     thumbnail = None
     sort_key = None
-    sort_key = None
     date_range = None
+
+    photos = []
+    html_file = None
 
     # File handling
     import_dir = None
     photos_dir = None
     zip_file = None
+    import_list_photos = []
 
     # Crypto
     password = None
     password_hashed = None
-
-    # Template
-    photos = []
-
-    # Set further album info
-    # Import Photos
-    # Read data from photos
-    # Create zip
 
     def __init__(self, import_dir):
         self.import_dir = import_dir
@@ -70,7 +64,6 @@ class Album(object):
 
             md_title = md.Meta.get('title', [''])[0]
             md_description = html
-            md_thumbnail = md.Meta.get('thumbnail', [''])[0]
             md_date = md.Meta.get('date', [''])[0]
             md_password = md.Meta.get('password', [''])[0]
 
@@ -79,8 +72,6 @@ class Album(object):
                 self.title = md_title
             if md_description:
                 self.description = md_description
-            if md_thumbnail:
-                self.thumbnail = md_thumbnail
             if md_date:
                 self.date_range = md_date
             if md_password:
@@ -104,32 +95,26 @@ class Album(object):
         if self.password:
             self.password_hashed = hashlib.md5(self.password).hexdigest()
 
-    def import_photos(self):
+    def get_photos_to_import(self):
         logger.info('Looking for photos in %s.' % self.import_dir)
-        photos_to_import = {}
-        exif_date_for_all_photos = True
-        for photo_to_import in walkdir(dir_2_walk=self.import_dir):
-            extension = os.path.splitext(photo_to_import)[1][1:]
-            if extension.lower() not in IMAGE_FILE_EXTENSIONS_TO_IMPORT:
-                continue
-            photo = Photo(image_file_original=photo_to_import, album=self)
-            exif_date = photo.exif_date
-            if exif_date:
-                photos_to_import[exif_date + photo_to_import] = photo_to_import
-            else:
-                exif_date_for_all_photos = False
-                photos_to_import[photo_to_import] = photo_to_import
+        for image_file in walkdir(dir_2_walk=self.import_dir):
+            image_file_extension = os.path.splitext(image_file)[1][1:]
+            if image_file_extension.lower() in IMAGE_FILE_EXTENSIONS_TO_IMPORT:
+                self.import_list_photos.append(image_file)
 
-        # If there is not an exif date on all photos, use path instead
-        if not exif_date_for_all_photos:
-            for photo_key, photo_file in photos_to_import.items():
-                del photos_to_import[photo_key]
-                photos_to_import[photo_file] = photo_file
+    def set_album_thumbnail(self):
+        for image in self.import_list_photos:
+            file_name = os.path.split(image)[1]
+            if file_name.startswith('thumbnail_'):
+                self.thumbnail = image
+                self.import_list_photos.remove(image)
+                break
 
-        i = 1
-        self.photos = []
-        for photo_key in sorted(photos_to_import.iterkeys()):
-            photo_to_import = photos_to_import[photo_key]
+        # If no explicit thumbnail was found, set first image as thumbnail.
+        self.thumbnail = self.import_list_photos[0]
+
+    def import_photos(self):
+        for photo_to_import in self.import_list_photos:
             logger.debug('Processing %s' % photo_to_import)
             photo = Photo(image_file_original=photo_to_import, album=self)
 
@@ -142,18 +127,15 @@ class Album(object):
             image_file_data['absolute_path'] = image_file_data['file']
             image_file_data['file'] = os.sep.join(image_file_data['file'].split(os.sep)[-2:])
 
-            # Set thumbnail if necessary
-            if i == 1 and not self.thumbnail:
-                self.thumbnail = os.path.join(self.slug, thumbnail_data['thumbnail_file'])
+            # Merge two data dicts into one and add to album.photos
+            self.photos.append(dict(thumbnail_data.items() + image_file_data.items()))
 
-            # Merge two data dicts into one
-            tpl_photo_data = dict(thumbnail_data.items() + image_file_data.items())
-
-            self.photos.append(tpl_photo_data)
-            i += 1
-
+        self._sort_photos_by_date()
         self._set_sort_key()
         self._set_date_range()
+
+    def _sort_photos_by_date(self):
+        self.photos = sorted(self.photos, key=operator.itemgetter('date'))
 
     def create_zipped_version(self):
         """ Creates a zip of all album photos if the album is not encrypted. """
@@ -181,16 +163,12 @@ class Album(object):
             self.date_range = ("%s - %s" % (self.first_photo_date().strftime(date_range_format),
                                             self.last_photo_date().strftime(date_range_format)))
 
-    def photos_sorted_by_date(self):
-        return sorted(self.photos, key=operator.itemgetter('date'))
-
-    def exif_date_to_datetime(self, exif_date):
+    @staticmethod
+    def exif_date_to_datetime(exif_date):
         return dateutil_parser.parse(exif_date)
 
     def first_photo_date(self):
-        photos = self.photos_sorted_by_date()
-        return self.exif_date_to_datetime(photos[0]['date'])
+        return self.exif_date_to_datetime(self.photos[0]['date'])
 
     def last_photo_date(self):
-        photos = self.photos_sorted_by_date()
-        return self.exif_date_to_datetime(photos[-1]['date'])
+        return self.exif_date_to_datetime(self.photos[-1]['date'])

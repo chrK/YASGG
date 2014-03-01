@@ -103,8 +103,9 @@ class Commands(object):
                 if choice == 'N':
                     continue
 
+            album.get_photos_to_import()
             album.import_photos()
-            album.create_zipped_version()
+            #album.create_zipped_version()
             gallery.add_album(album)
 
         # Update persistent album data.
@@ -115,8 +116,6 @@ class Commands(object):
         gallery.list_albums()
 
     def delete_album(self, args):
-        # TODO: Bugged
-        return
         album_to_delete = args['<album-slug>']
         gallery = Gallery()
         gallery.delete_album(album_to_delete)

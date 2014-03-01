@@ -29,7 +29,7 @@
     </div>
 
     <div id="content">
-        {% for photo in album.photos_for_tpl %}
+        {% for photo in album.photos %}
             <div class="thumbnail-container">
                 <a class="lightbox{% if password %} encrypted{% endif %}"
                     {% if album.password %} href="#" data-src-encrypted="{{ photo.file }}" {% else %}href="{{photo.file }}"{% endif %}>
