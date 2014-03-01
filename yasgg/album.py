@@ -89,7 +89,7 @@ class Album(object):
         self.photos_dir = '%sphotos%s' % (self.base_dir, os.sep)
 
         # Set template file
-        self.html_file = '%sindex.html' % self.base_dir
+        self.html_file = '%salbum_index.html' % self.base_dir
 
         # Build md5 hash of password to get len 32 key
         if self.password:
