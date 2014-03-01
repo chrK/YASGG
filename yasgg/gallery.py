@@ -117,14 +117,14 @@ class Gallery(object):
         with open(self.albums_data, 'w') as albums_data_file:
             for album_key, album in self.albums.iteritems():
                 self.albums[album.slug] = {
-                    "slug": album.slug,  # = relative path
                     "base_dir": album.base_dir,
+                    "date_range": album.date_range,
+                    "description": album.description,
+                    "photos": [x for x in album.photos],
+                    "slug": album.slug,  # = relative path
+                    "sort_key": album.sort_key,
                     "title": album.title,
                     "thumbnail": album.thumbnail,
-                    "photos": [x for x in album.photos],
-                    "description": album.description,
-                    "sort_key": album.sort_key,
-                    "date_range": album.date_range,
                 }
 
             album_data = json.dumps(self.albums, sort_keys=True, indent=4 * ' ')
